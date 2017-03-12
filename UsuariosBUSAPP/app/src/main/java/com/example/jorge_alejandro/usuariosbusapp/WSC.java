@@ -8,8 +8,7 @@ import android.util.Log;
  * Created by JORGE_ALEJANDRO on 24/02/2017.
  */
 
-public class WSCgetBus extends AsyncTask<String, Long, String> {
-
+public class WSC extends AsyncTask<String, Long, String> {
 
     @Override
     protected String doInBackground(String... params) {
@@ -19,12 +18,5 @@ public class WSCgetBus extends AsyncTask<String, Long, String> {
         } catch (HttpRequest.HttpRequestException exception) {
             return null;
         }
-    }
-
-    protected void onPostExecute(String response) {
-        Log.d(response,response);
-        //Gson json=new Gson();
-        //String resultado=json.fromJson(response, String.class);
-        //MainActivity.texto.setText(response);
     }
 }

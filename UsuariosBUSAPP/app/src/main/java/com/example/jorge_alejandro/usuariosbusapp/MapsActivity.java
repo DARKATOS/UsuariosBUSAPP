@@ -8,6 +8,7 @@ import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -19,11 +20,18 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private Marker marcador1;
+    private ArrayList<Marker> marcadoresBuses;
     double latitud=0.0;
     double longitud=0.0;
 
@@ -31,6 +39,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        marcadoresBuses=new ArrayList<>();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -58,11 +67,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public void agregarMarcador(double latitud, double longitud) {
+    public void agregarMarcadorUsuario(double latitud, double longitud) {
         LatLng coordenadas = new LatLng(latitud, longitud);
         CameraUpdate miubicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
         if (marcador1 != null) marcador1.remove();
-        marcador1 = mMap.addMarker(new MarkerOptions().position(coordenadas).title("HOLA DOÑA NEYI").snippet("Estudiando en la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+        marcador1 = mMap.addMarker(new MarkerOptions().position(coordenadas).title("USUARIO").snippet("Estudiante de la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
         mMap.animateCamera(miubicacion);
     }
 
@@ -70,7 +79,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (location != null) {
             latitud = location.getLatitude();
             longitud = location.getLongitude();
-            agregarMarcador(latitud, longitud);
+            agregarMarcadorUsuario(latitud, longitud);
+
         }
     }
 
@@ -78,6 +88,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         public void onLocationChanged(Location location) {
             actualizarUbicacion(location);
+            busUpdate();
         }
 
         @Override
@@ -111,6 +122,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             toast.show();
         }
 
+    }
+
+    private void busUpdate()
+    {
+        try {
+            String url = "http://192.168.1.57:8084/BUSAPP/rest/services/busUpdateGet";
+            String response = new WSC().execute(url).get();
+            Gson json= new Gson();
+            Type type=new TypeToken<ArrayList<LocationBus>>() {}.getType();
+            ArrayList<LocationBus> locationsBus=json.fromJson(response,type);
+            for (int i=0; i<marcadoresBuses.size();i++)
+            {
+                if (marcadoresBuses.get(i)!=null)
+                {
+                    marcadoresBuses.get(i).remove();
+                }
+            }
+            marcadoresBuses=new ArrayList<>();
+            for (int i=0; i<locationsBus.size(); i++)
+            {
+                Log.d("Info", locationsBus.get(i).getLatitude()+", "+locationsBus.get(i).getLongitude()+", "+locationsBus.get(i).getBus().getId());
+                LatLng coordenadas = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
+                Marker marcador=mMap.addMarker(new MarkerOptions().position(coordenadas).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+                marcadoresBuses.add(marcador);
+            }
+
+            Log.d("Info", response);
+        } catch (Exception e) {
+            Log.d("Error", "Exception: "+e.toString());
+        }
     }
 
 
