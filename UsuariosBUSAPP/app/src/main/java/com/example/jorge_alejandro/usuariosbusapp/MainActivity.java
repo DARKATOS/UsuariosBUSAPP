@@ -8,6 +8,8 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static String ip="192.168.1.57";
+
     private Button mapa;
 
     @Override

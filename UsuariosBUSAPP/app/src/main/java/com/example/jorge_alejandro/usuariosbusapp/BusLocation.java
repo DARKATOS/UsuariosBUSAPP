@@ -4,14 +4,14 @@ package com.example.jorge_alejandro.usuariosbusapp;
  * Created by JORGE_ALEJANDRO on 07/03/2017.
  */
 
-public class LocationBus {
+public class BusLocation {
 
     private int id;
     private double latitude;
     private double longitude;
     private Bus bus;
 
-    public LocationBus(int id, double latitude, double longitude, Bus bus) {
+    public BusLocation(int id, double latitude, double longitude, Bus bus) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;

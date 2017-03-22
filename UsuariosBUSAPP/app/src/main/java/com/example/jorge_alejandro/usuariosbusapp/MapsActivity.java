@@ -25,21 +25,18 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private GoogleMap mMap;
-    private Marker marcador1;
-    private ArrayList<Marker> marcadoresBuses;
-    double latitud=0.0;
-    double longitud=0.0;
+    private GoogleMap map;
+    private Marker userMarker;
+    private ArrayList<Marker> busMarkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        marcadoresBuses=new ArrayList<>();
+        busMarkers=new ArrayList<>();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -58,36 +55,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        miUbicacion();
+        map = googleMap;
+        userLocation();
         // Add a marker in Sydney and move the camera
         //LatLng sydney = new LatLng(-34, 151);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        //map.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        //map.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
     }
 
-    public void agregarMarcadorUsuario(double latitud, double longitud) {
-        LatLng coordenadas = new LatLng(latitud, longitud);
-        CameraUpdate miubicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
-        if (marcador1 != null) marcador1.remove();
-        marcador1 = mMap.addMarker(new MarkerOptions().position(coordenadas).title("USUARIO").snippet("Estudiante de la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
-        mMap.animateCamera(miubicacion);
+    public void addUserMarker(double latitude, double longitude) {
+        LatLng coordinates = new LatLng(latitude, longitude);
+        CameraUpdate userLocation = CameraUpdateFactory.newLatLngZoom(coordinates, 16);
+        if (userMarker != null) userMarker.remove();
+        userMarker = map.addMarker(new MarkerOptions().position(coordinates).title("USUARIO").snippet("Estudiante de la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+        map.animateCamera(userLocation);
     }
 
-    public void actualizarUbicacion(Location location) {
+    public void locationUpdate(Location location) {
         if (location != null) {
-            latitud = location.getLatitude();
-            longitud = location.getLongitude();
-            agregarMarcadorUsuario(latitud, longitud);
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            addUserMarker(latitude, longitude);
 
         }
     }
 
-    LocationListener escucharlocation = new LocationListener() {
+    LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            actualizarUbicacion(location);
+            locationUpdate(location);
             busUpdate();
         }
 
@@ -107,15 +104,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-    private void miUbicacion() {
+    private void userLocation() {
         try {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
-            actualizarUbicacion(location);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 15000, 0, escucharlocation);
+            locationUpdate(location);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 15000, 0, locationListener);
         }catch(Exception e)
         {
             Toast toast = Toast.makeText(this, "Mensaje: "+e.getMessage(), Toast.LENGTH_LONG);
@@ -127,25 +124,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void busUpdate()
     {
         try {
-            String url = "http://192.168.1.57:8084/BUSAPP/rest/services/busUpdateGet";
+            String url = "http://"+MainActivity.ip+":8084/BUSAPP/rest/services/busUpdateGet";
             String response = new WSC().execute(url).get();
             Gson json= new Gson();
-            Type type=new TypeToken<ArrayList<LocationBus>>() {}.getType();
-            ArrayList<LocationBus> locationsBus=json.fromJson(response,type);
-            for (int i=0; i<marcadoresBuses.size();i++)
+            Type type=new TypeToken<ArrayList<BusLocation>>() {}.getType();
+            ArrayList<BusLocation> locationsBus=json.fromJson(response,type);
+            for (int i=0; i<busMarkers.size();i++)
             {
-                if (marcadoresBuses.get(i)!=null)
+                if (busMarkers.get(i)!=null)
                 {
-                    marcadoresBuses.get(i).remove();
+                    busMarkers.get(i).remove();
                 }
             }
-            marcadoresBuses=new ArrayList<>();
+            busMarkers=new ArrayList<>();
             for (int i=0; i<locationsBus.size(); i++)
             {
                 Log.d("Info", locationsBus.get(i).getLatitude()+", "+locationsBus.get(i).getLongitude()+", "+locationsBus.get(i).getBus().getId());
-                LatLng coordenadas = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
-                Marker marcador=mMap.addMarker(new MarkerOptions().position(coordenadas).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
-                marcadoresBuses.add(marcador);
+                LatLng coordinates = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
+                Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+                busMarkers.add(marcador);
             }
 
             Log.d("Info", response);
