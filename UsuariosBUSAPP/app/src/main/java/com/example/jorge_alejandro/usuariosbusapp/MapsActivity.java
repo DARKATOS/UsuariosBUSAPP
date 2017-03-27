@@ -68,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng coordinates = new LatLng(latitude, longitude);
         CameraUpdate userLocation = CameraUpdateFactory.newLatLngZoom(coordinates, 16);
         if (userMarker != null) userMarker.remove();
-        userMarker = map.addMarker(new MarkerOptions().position(coordinates).title("USUARIO").snippet("Estudiante de la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+        userMarker = map.addMarker(new MarkerOptions().position(coordinates).title("USUARIO").snippet("Estudiante de la U.Caldas").icon(BitmapDescriptorFactory.fromResource(R.mipmap.bus_user)));
         map.animateCamera(userLocation);
     }
 
@@ -141,7 +141,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             {
                 Log.d("Info", locationsBus.get(i).getLatitude()+", "+locationsBus.get(i).getLongitude()+", "+locationsBus.get(i).getBus().getId());
                 LatLng coordinates = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
-                Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+                Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.bus_image)));
                 busMarkers.add(marcador);
             }
 

@@ -21,7 +21,7 @@
         tools:context="com.example.jorge_alejandro.usuariosbusapp.MapsActivity" />
 
     <TextView
-        android:text="Hola mundo"
+        android:text="BUSAPP"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
