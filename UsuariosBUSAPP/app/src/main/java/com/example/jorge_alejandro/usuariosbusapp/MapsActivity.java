@@ -77,7 +77,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
             addUserMarker(latitude, longitude);
-
+            Log.d("Info", "ACtualizando usuario");
         }
     }
 
@@ -112,7 +112,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
             locationUpdate(location);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 15000, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, locationListener);
         }catch(Exception e)
         {
             Toast toast = Toast.makeText(this, "Mensaje: "+e.getMessage(), Toast.LENGTH_LONG);
@@ -123,8 +123,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void busUpdate()
     {
+        Log.d("Info","entre a actualizar");
         try {
-            String url = "http://"+MainActivity.ip+":8084/BUSAPP/rest/services/busUpdateGet";
+            String url = "http://"+MainActivity.ip+"/BUSAPP/rest/services/busUpdateGet";
             String response = new WSC().execute(url).get();
             Gson json= new Gson();
             Type type=new TypeToken<ArrayList<BusLocation>>() {}.getType();
@@ -141,10 +142,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             {
                 Log.d("Info", locationsBus.get(i).getLatitude()+", "+locationsBus.get(i).getLongitude()+", "+locationsBus.get(i).getBus().getId());
                 LatLng coordinates = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
-                Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS").snippet("id del bus: "+locationsBus.get(i).getBus().getId()).icon(BitmapDescriptorFactory.fromResource(R.mipmap.bus_image)));
+                String url2 = "http://"+MainActivity.ip+"/BUSAPP/rest/services/busWayShow/"+locationsBus.get(i).getBus().getId();
+                String response2 = new WSC().execute(url).get();
+                Type type2=new TypeToken<ArrayList<BusWay>>() {}.getType();
+                ArrayList<BusWay> busWay=json.fromJson(response2,type2);
+                String ruta="Ruta\n";
+                for (int j=0; j<busWay.size(); j++)
+                {
+                    ruta+=busWay.get(j).getIdbusWay()+"\n";
+                    ruta+=busWay.get(j).getWayName()+"\n";
+                }
+                Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS:"+locationsBus.get(i).getBus().getId()).snippet(ruta).icon(BitmapDescriptorFactory.fromResource(R.mipmap.bus_image)));
                 busMarkers.add(marcador);
             }
-
             Log.d("Info", response);
         } catch (Exception e) {
             Log.d("Error", "Exception: "+e.toString());

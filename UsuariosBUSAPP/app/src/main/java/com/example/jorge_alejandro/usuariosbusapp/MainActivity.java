@@ -8,7 +8,7 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static String ip="192.168.1.57";
+    public static String ip="181.59.153.198:8085";
 
     private Button mapa;
 
