@@ -23,20 +23,26 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap map;
     private Marker userMarker;
+    private User user;
     private ArrayList<Marker> busMarkers;
+    private ArrayList<BusLocation> locationsBus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         busMarkers=new ArrayList<>();
+        locationsBus=new ArrayList<>();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -56,6 +62,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
+        map.setOnMarkerClickListener(this);
         userLocation();
         // Add a marker in Sydney and move the camera
         //LatLng sydney = new LatLng(-34, 151);
@@ -76,6 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
+            user=new User(latitude, longitude);
             addUserMarker(latitude, longitude);
             Log.d("Info", "ACtualizando usuario");
         }
@@ -129,7 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String response = new WSC().execute(url).get();
             Gson json= new Gson();
             Type type=new TypeToken<ArrayList<BusLocation>>() {}.getType();
-            ArrayList<BusLocation> locationsBus=json.fromJson(response,type);
+            locationsBus=json.fromJson(response,type);
             for (int i=0; i<busMarkers.size();i++)
             {
                 if (busMarkers.get(i)!=null)
@@ -143,7 +151,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d("Info", locationsBus.get(i).getLatitude()+", "+locationsBus.get(i).getLongitude()+", "+locationsBus.get(i).getBus().getId());
                 LatLng coordinates = new LatLng(locationsBus.get(i).getLatitude(), locationsBus.get(i).getLongitude());
                 String url2 = "http://"+MainActivity.ip+"/BUSAPP/rest/services/busWayShow/"+locationsBus.get(i).getBus().getId();
-                String response2 = new WSC().execute(url).get();
+                String response2 = new WSC().execute(url2).get();
                 Type type2=new TypeToken<ArrayList<BusWay>>() {}.getType();
                 ArrayList<BusWay> busWay=json.fromJson(response2,type2);
                 String ruta="Ruta\n";
@@ -153,6 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     ruta+=busWay.get(j).getWayName()+"\n";
                 }
                 Marker marcador=map.addMarker(new MarkerOptions().position(coordinates).title("BUS:"+locationsBus.get(i).getBus().getId()).snippet(ruta).icon(BitmapDescriptorFactory.fromResource(R.mipmap.bus_image)));
+                marcador.setTag(i);
                 busMarkers.add(marcador);
             }
             Log.d("Info", response);
@@ -162,4 +171,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        try {
+            for (int i=0; i<busMarkers.size(); i++)
+            {
+                if (marker.getTitle().equals(busMarkers.get(i).getTitle()))
+                {
+                    int bus=(int)busMarkers.get(i).getTag();
+                    String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins="+user.getLatitude()+","+user.getLongitude()+"&destinations="+locationsBus.get(bus).getLatitude()+","+locationsBus.get(bus).getLongitude();
+                    String response = new WSC().execute(url).get();
+                    JSONObject json=new JSONObject(response);
+                    JSONArray array = json.getJSONArray("rows");
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            Log.d("Error", "Exception: "+e.toString());
+        }
+
+        return false;
+    }
 }
